@@ -1,0 +1,16 @@
+{
+  "name": "@support-desk/knowledge",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "4.6.5",
+    "@support-desk/contracts": "0.1.0"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

@@ -1,0 +1,60 @@
+import { createHash } from "node:crypto";
+
+export type ApprovalCommand = Readonly<{
+  workspaceId: string;
+  proposalId: string;
+  expectedVersion: number;
+  idempotencyKey: string;
+}>;
+
+export type ApprovalOutcome =
+  | { status: "approved" | "replayed"; actionId: string; version: number }
+  | { status: "version-conflict"; currentVersion: number }
+  | { status: "idempotency-conflict" }
+  | { status: "not-found" };
+
+export type ApprovalWrite = ApprovalCommand & { requestDigest: string };
+
+export type ApprovalRepository = {
+  // One transaction: workspace-scoped lookup, version check, action and receipt.
+  // Receipt uniqueness is (workspaceId, operation, idempotencyKey).
+  // Replay the same key + digest before checking the now-advanced version.
+  // A reused key with a different digest must return idempotency-conflict.
+  // This contract needs real database constraints and concurrency tests.
+  approveAtomically: (write: ApprovalWrite) => Promise<ApprovalOutcome>;
+};
+
+export const createApproveProposal = (repository: ApprovalRepository) => {
+  // The caller must obtain workspaceId from an authorized request context.
+  return async (command: ApprovalCommand): Promise<ApprovalOutcome> => {
+    if (
+      !Number.isSafeInteger(command.expectedVersion) ||
+      command.expectedVersion < 0
+    ) {
+      throw new RangeError("Expected version must be a non-negative integer.");
+    }
+
+    if (
+      !command.workspaceId.trim() ||
+      !command.proposalId.trim() ||
+      !command.idempotencyKey.trim()
+    ) {
+      throw new TypeError(
+        "Workspace, proposal and idempotency key are required.",
+      );
+    }
+
+    const requestDigest = createHash("sha256")
+      .update(
+        JSON.stringify([
+          "approve-proposal:v1",
+          command.workspaceId,
+          command.proposalId,
+          command.expectedVersion,
+        ]),
+      )
+      .digest("hex");
+
+    return repository.approveAtomically({ ...command, requestDigest });
+  };
+};

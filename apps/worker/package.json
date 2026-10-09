@@ -1,0 +1,18 @@
+{
+  "name": "@support-desk/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "dev": "tsx watch src/main.ts",
+    "build": "node ../../tools/build.mjs worker",
+    "start": "node dist/main.mjs"
+  },
+  "dependencies": {
+    "pg": "8.23.1",
+    "@support-desk/data": "0.1.0",
+    "@support-desk/config": "0.1.0",
+    "@support-desk/knowledge": "0.1.0"
+  }
+}

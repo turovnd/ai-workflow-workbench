@@ -1,0 +1,103 @@
+name: turovnd-workflow
+x-app: &app
+  image: ${APP_IMAGE:-turovnd-workflow:local}
+  build:
+    context: .
+    target: runtime
+  restart: unless-stopped
+  init: true
+  read_only: true
+  tmpfs:
+    - /tmp:size=16M
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  mem_limit: 384m
+  cpus: 0.5
+  logging:
+    driver: json-file
+    options:
+      max-size: 5m
+      max-file: '2'
+  environment: &environment
+    DATABASE_URL: postgresql://workflow:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/workflow
+    CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
+    TRUST_PROXY: ${TRUST_PROXY:-}
+    PORT: '4010'
+    GENERATION_MODE: ${GENERATION_MODE:-deterministic}
+    ALLOW_LIVE_PROVIDER: ${ALLOW_LIVE_PROVIDER:-false}
+    LIVE_CALL_BUDGET: ${LIVE_CALL_BUDGET:-2}
+    OPENROUTER_MODEL: ${OPENROUTER_MODEL:-openai/gpt-4.1-mini}
+    OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+  depends_on:
+    db:
+      condition: service_healthy
+services:
+  db:
+    image: postgres:17.11-alpine3.24@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+    restart: unless-stopped
+    mem_limit: 384m
+    cpus: 0.5
+    environment:
+      POSTGRES_DB: workflow
+      POSTGRES_USER: workflow
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - workflow-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U workflow -d workflow']
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    logging:
+      driver: json-file
+      options:
+        max-size: 5m
+        max-file: '2'
+  migrate:
+    <<: *app
+    command: ['node', 'dist-server/migrate.mjs']
+    restart: 'no'
+
+  api:
+    <<: *app
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - '127.0.0.1:${API_PORT:-4010}:4010'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:4010/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 4
+  worker:
+    <<: *app
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    command: ['node', 'dist-server/worker.mjs']
+    stop_grace_period: 20s
+  web:
+    profiles: ['local']
+    image: turovnd-workflow-web:local
+    build:
+      context: .
+      target: web
+    ports:
+      - '127.0.0.1:${WEB_PORT:-4173}:8080'
+    depends_on:
+      api:
+        condition: service_healthy
+    mem_limit: 64m
+    cpus: 0.25
+    restart: unless-stopped
+volumes:
+  workflow-data:

@@ -1,0 +1,29 @@
+{
+  "name": "@support-desk/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@fontsource-variable/inter": "5.3.0",
+    "@tanstack/react-query": "5.104.1",
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
+    "cn": "0.4.0",
+    "lucide-react": "1.54.0",
+    "radix-ui": "1.7.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "tailwind-merge": "3.7.0",
+    "zod": "4.6.5",
+    "@support-desk/contracts": "0.1.0"
+  },
+  "exports": {
+    "./api": "./src/lib/api/index.ts",
+    "./events": "./src/lib/api/events.ts"
+  }
+}

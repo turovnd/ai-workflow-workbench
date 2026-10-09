@@ -1,0 +1,15 @@
+{
+  "name": "@support-desk/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "4.6.5"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

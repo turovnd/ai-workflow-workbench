@@ -1,0 +1,54 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import {
+  createApproveProposal,
+  type ApprovalCommand,
+  type ApprovalWrite,
+} from "./approve-proposal.ts";
+
+const command: ApprovalCommand = {
+  workspaceId: "sample-workspace",
+  proposalId: "sample-proposal",
+  expectedVersion: 3,
+  idempotencyKey: "sample-attempt",
+};
+
+await test("invalid versions fail before any persistence operation", async () => {
+  let calls = 0;
+  const approve = createApproveProposal({
+    approveAtomically: () => {
+      calls += 1;
+      return Promise.resolve({ status: "not-found" });
+    },
+  });
+
+  for (const expectedVersion of [-1, 0.5, Number.NaN, Infinity]) {
+    await assert.rejects(approve({ ...command, expectedVersion }), RangeError);
+  }
+  assert.equal(calls, 0);
+});
+
+await test("digest identifies scoped intent independently of retry key", async () => {
+  const writes: ApprovalWrite[] = [];
+  const approve = createApproveProposal({
+    approveAtomically: (write) => {
+      writes.push(write);
+      return Promise.resolve({ status: "version-conflict", currentVersion: 4 });
+    },
+  });
+
+  const outcome = await approve(command);
+  await approve({ ...command, idempotencyKey: "another-attempt" });
+  await approve({ ...command, workspaceId: "another-workspace" });
+  await approve({ ...command, proposalId: "another-proposal" });
+  await approve({ ...command, expectedVersion: 4 });
+
+  assert.deepEqual(outcome, { status: "version-conflict", currentVersion: 4 });
+  assert.equal(writes[0]?.requestDigest, writes[1]?.requestDigest);
+  assert.equal(
+    new Set(writes.slice(1).map((write) => write.requestDigest)).size,
+    4,
+  );
+  assert.equal(writes[1]?.idempotencyKey, "another-attempt");
+});

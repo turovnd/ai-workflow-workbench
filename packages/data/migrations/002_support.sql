@@ -1,0 +1,16 @@
+ALTER TABLE workspaces ADD COLUMN IF NOT EXISTS demo boolean NOT NULL DEFAULT true;
+CREATE TABLE IF NOT EXISTS accounts (id uuid PRIMARY KEY,workspace_id uuid UNIQUE NOT NULL REFERENCES workspaces,email text UNIQUE NOT NULL,password_hash text NOT NULL,created_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE IF NOT EXISTS sessions (token_hash text PRIMARY KEY,workspace_id uuid NOT NULL REFERENCES workspaces ON DELETE CASCADE,expires_at timestamptz NOT NULL DEFAULT now()+interval '24 hours');
+CREATE TABLE IF NOT EXISTS tickets (id uuid PRIMARY KEY,sequence bigint GENERATED ALWAYS AS IDENTITY UNIQUE,workspace_id uuid NOT NULL REFERENCES workspaces ON DELETE CASCADE,subject text NOT NULL,customer text NOT NULL,email text NOT NULL,message text NOT NULL,topic text NOT NULL,status text NOT NULL DEFAULT 'open' CHECK(status IN ('open','resolved')),created_at timestamptz NOT NULL DEFAULT now());
+CREATE INDEX IF NOT EXISTS tickets_workspace_page ON tickets(workspace_id,sequence DESC);
+CREATE INDEX IF NOT EXISTS tickets_workspace_status_page ON tickets(workspace_id,status,sequence DESC);
+ALTER TABLE runs ADD COLUMN IF NOT EXISTS ticket_id uuid REFERENCES tickets;
+ALTER TABLE runs ADD COLUMN IF NOT EXISTS provider text NOT NULL DEFAULT 'deterministic';
+CREATE TABLE IF NOT EXISTS drafts (run_id uuid PRIMARY KEY REFERENCES runs ON DELETE CASCADE,text text NOT NULL,version integer NOT NULL DEFAULT 1,edited boolean NOT NULL DEFAULT false);
+CREATE TABLE IF NOT EXISTS replies (id uuid PRIMARY KEY,workspace_id uuid NOT NULL REFERENCES workspaces,run_id uuid UNIQUE NOT NULL REFERENCES runs,ticket_id uuid NOT NULL REFERENCES tickets,text text NOT NULL,edited boolean NOT NULL,created_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE IF NOT EXISTS reply_receipts(workspace_id uuid NOT NULL REFERENCES workspaces,key text NOT NULL,digest text NOT NULL,reply_id uuid NOT NULL REFERENCES replies,task_id uuid REFERENCES tasks,PRIMARY KEY(workspace_id,key));
+CREATE TABLE IF NOT EXISTS history (id uuid PRIMARY KEY,sequence bigint GENERATED ALWAYS AS IDENTITY UNIQUE,workspace_id uuid NOT NULL REFERENCES workspaces,ticket_id uuid NOT NULL REFERENCES tickets,run_id uuid NOT NULL REFERENCES runs,kind text NOT NULL CHECK(kind IN ('run','reply','escalation')),title text NOT NULL,text text NOT NULL,edited boolean NOT NULL DEFAULT false,created_at timestamptz NOT NULL DEFAULT now());
+CREATE INDEX IF NOT EXISTS history_workspace_ticket_page ON history(workspace_id,ticket_id,sequence DESC);
+CREATE TABLE IF NOT EXISTS provider_budget (id text PRIMARY KEY,used integer NOT NULL DEFAULT 0 CHECK(used>=0));
+INSERT INTO provider_budget(id) VALUES('openrouter') ON CONFLICT DO NOTHING;
+CREATE TABLE IF NOT EXISTS provider_attempts (id uuid PRIMARY KEY,run_id uuid REFERENCES runs ON DELETE SET NULL,fence integer NOT NULL,created_at timestamptz NOT NULL DEFAULT now(),UNIQUE(run_id,fence));
