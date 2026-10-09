@@ -2,7 +2,7 @@
 id: SD-T17
 type: task
 is_task_of: SD-S08
-status: in-progress
+status: verified-hosted
 depends_on: ['SD-T13', 'SD-T14', 'SD-T16']
 ---
 
@@ -26,22 +26,22 @@ Create/push the explicitly authorized turovnd repository, connect the correct Ve
 
 ## Acceptance criteria
 
-- [ ] Public source contains no secrets/private inputs and uses the intended remote.
-- [ ] A real hosted CI run passes for the published revision.
-- [ ] A push triggers the intended Vercel deployment; backend release automation reports its own tested status.
+- [x] Public source contains no secrets/private inputs and uses the intended remote.
+- [x] A real hosted CI run passes for the published revision.
+- [x] A push triggers the intended Vercel deployment; backend release automation reports its own tested status.
 
 ## Tests and verification
 
 - Secret/source allowlist review, remote identity verification, hosted CI run and deployment revision comparison.
-- Exercise a harmless follow-up change through the configured delivery path.
+- Verify follow-up commits independently through the configured delivery path.
 
 ## Status
 
-**in-progress**.
+**verified-hosted**.
 
 ## Implementation evidence
 
-The owner authorized public publication. The coordinator confirmed GitHub-to-Vercel linkage through the official integration. First source push, hosted CI and a push-triggered build remain unverified.
+Public source is published to the intended repository. Git `main` commit [5f9228975d9e](https://github.com/turovnd/ai-workflow-workbench/commit/5f9228975d9e77939842ab65a3a6aee395fbe2c7) automatically produced READY production deployment `dpl_ARdtDjWoheTQAXkoiQvszfVRbM3v`. [GitHub CI run 38000404242](https://github.com/turovnd/ai-workflow-workbench/actions/runs/38000404242) succeeded for that exact source revision, including the `verify` job’s static, unit, PostgreSQL, build, container and browser checks. Backend image rollout was verified separately; the release workflow packages an artifact and does not yet establish automatic server deployment.
 
 Implementation and verification locations:
 

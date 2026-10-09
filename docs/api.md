@@ -2,7 +2,7 @@
 
 Production API origin: `https://workflow-api.b2p.space`. Local origin: `http://127.0.0.1:4010`. Route paths below are relative to that origin, without `/api`; the local web proxy adds/removes `/api` at its boundary.
 
-OpenAPI 3.1.0 is generated at `/openapi.json`; Swagger UI and its assets are served locally at `/docs/`. The document describes 17 production operations with Fastify request/response schemas, bearer security, errors and examples. Their deployed availability is tracked in [delivery status](delivery-status.md), not assumed from this document.
+OpenAPI 3.1.0 is generated at `/openapi.json`; Swagger UI and its assets are served locally at `/docs/`. The document describes 17 production operations with Fastify request/response schemas, bearer security, errors and examples. [Public Swagger](https://workflow-api.b2p.space/docs/) and [OpenAPI](https://workflow-api.b2p.space/openapi.json) are deployed and verified; release evidence is in [delivery status](delivery-status.md).
 
 ## Route map
 

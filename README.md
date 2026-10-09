@@ -2,9 +2,9 @@
 
 Resolve synthetic customer requests using current help articles. Inspect the sources, edit a saved reply and explicitly approve that exact version. No email is sent.
 
-**[Open the UI](https://turovnd-support-desk.vercel.app)** · [API health](https://workflow-api.b2p.space/health)
+**[Open the UI](https://turovnd-support-desk.vercel.app)** · [Swagger API](https://workflow-api.b2p.space/docs/) · [Source](https://github.com/turovnd/ai-workflow-workbench)
 
-The UI is published on Vercel. The independent Fastify API, durable worker and PostgreSQL are deployed in this app’s own Docker project. Public backend workflow checks passed. Exact-origin CORS and UI authentication passed; full refactor regression and Git-connected delivery remain tracked in [delivery status](docs/delivery-status.md); a published static UI alone does not establish those checks.
+Pushes to `main` automatically deploy the UI to Vercel; the first Git-triggered production build is verified. The independent Fastify API, durable worker and PostgreSQL run in this app’s own Docker project. Public UI authentication, API/data access and complete deterministic backend workflows passed verification. GitHub CI passed for the verified source revision; see [delivery status](docs/delivery-status.md) for exact release and check evidence.
 
 ## Run locally
 
