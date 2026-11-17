@@ -37,6 +37,7 @@ for (const [source, options] of Object.entries(service.functions)) {
       runtime: 'nodejs24.x',
       handler: 'index.cjs',
       launcherType: 'Nodejs',
+      shouldAddHelpers: true,
       ...options,
       experimentalTriggers: options.experimentalTriggers.map((trigger) => ({
         ...trigger,

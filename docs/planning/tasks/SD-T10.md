@@ -13,7 +13,7 @@ Dependencies: [SD-T09](SD-T09.md), [SD-T07](SD-T07.md), [SD-T06](SD-T06.md).
 ## Acceptance criteria
 
 - Deploy frontend, API and private worker through Git to Vercel with a separate Neon database.
-- Keep model credentials on the worker and preview data isolated from production.
+- Keep model credentials server-side, consume them only in worker code and isolate preview data from production.
 - Verify the public demo with real AI, source review, approval and reload.
 - Document setup, failure recovery and honest product limits.
 

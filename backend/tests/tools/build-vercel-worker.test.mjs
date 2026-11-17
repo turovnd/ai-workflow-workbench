@@ -24,6 +24,7 @@ test('queue functions load without the repository or installed dependencies', as
         await readFile(join(directory, '.vc-config.json'), 'utf8'),
       );
       assert.equal(config.experimentalTriggers[0].type, 'queue/v2beta');
+      assert.equal(config.shouldAddHelpers, true);
       assert.equal(
         config.experimentalTriggers[0].consumer,
         `worker-api-${name}`,

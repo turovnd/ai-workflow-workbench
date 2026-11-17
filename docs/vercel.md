@@ -18,6 +18,9 @@ Runtime settings:
 | `OPENROUTER_API_KEY`         | worker only     | Model credential             |
 | `OPENROUTER_MODEL`           | worker          | Model identifier             |
 | `LIVE_CALL_BUDGET=-1`        | worker          | No lifetime application cap  |
+| `TRUST_PROXY=127.0.0.1,::1`  | backend         | Trust the local Vercel proxy |
+
+Vercel overwrites `X-Forwarded-For` at ingress. Trust only its local runtime proxy so the API's per-IP rate limiter distinguishes visitors. Keep this empty when running the API directly; do not trust arbitrary proxies.
 
 Secrets belong in Vercel project environment settings, scoped to Production or Preview. Services share the project environment; this is not a per-service secret boundary. Only the worker code consumes the model key, and Vite never exposes it because it has no public prefix. Local Docker injects the key only into the worker. The frontend needs no API credential or absolute API URL.
 
