@@ -20,6 +20,8 @@ Dependencies: [SD-T04](SD-T04.md).
 
 Verified locally with OpenRouter / openai/gpt-4.1-mini: three requests completed, including a source-backed reply and a missing-policy clarification. The instruction was tightened after observing unsupported assumptions. Unit tests cover fabricated quotes, bounded response bytes, provider rejection and interrupted responses. This is a small live check, not a general model-quality benchmark.
 
+Hosted verification on 2026-11-17: one preview request and two production requests completed with OpenRouter. Production covered an expired sign-in link and an unsupported retention-policy question. Both jobs finished in one provider attempt; the latter asked for clarification without promising a retention period. Source review, edited approval, internal escalation and persistence after reload were verified through the public UI.
+
 - [backend/common/knowledge/openrouter/index.ts](../../../backend/common/knowledge/openrouter/index.ts)
 - [backend/common/knowledge/openrouter/transport.ts](../../../backend/common/knowledge/openrouter/transport.ts)
 

@@ -18,7 +18,7 @@ Dependencies: [SD-T05](SD-T05.md).
 
 ## Evidence and status
 
-Database and local worker behavior verified: targeted claims, duplicate delivery, expired leases, fencing, cancellation and transient/terminal provider errors pass against PostgreSQL. Vercel queue delivery remains part of SD-T10 hosted verification.
+Database and local worker behavior verified: targeted claims, duplicate delivery, expired leases, fencing, cancellation and transient/terminal provider errors pass against PostgreSQL. On 2026-11-17, Vercel Queues delivered live jobs in preview and production; both production jobs finished in one provider attempt. Both queue consumers are packaged as private functions. Scheduled recovery is configured for every 30 minutes; failure/recovery semantics are covered by PostgreSQL integration tests, not a claimed production fault-injection exercise.
 
 - [backend/common/data/repositories/jobs.ts](../../../backend/common/data/repositories/jobs.ts)
 - [backend/modules/worker/process.ts](../../../backend/modules/worker/process.ts)
