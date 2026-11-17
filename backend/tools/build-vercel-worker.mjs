@@ -38,6 +38,10 @@ for (const [source, options] of Object.entries(service.functions)) {
       handler: 'index.cjs',
       launcherType: 'Nodejs',
       ...options,
+      experimentalTriggers: options.experimentalTriggers.map((trigger) => ({
+        ...trigger,
+        consumer: `worker-${name.replaceAll('/', '-')}`,
+      })),
     }),
   );
 }
