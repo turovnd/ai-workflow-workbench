@@ -1,28 +1,17 @@
-# Workflows and consistency
+# Product workflows
 
-## Reply preparation
+## Prepare and review
 
-1. Authenticate and read a workspace-scoped ticket.
-2. Create the run and durable job in one transaction.
-3. A separate worker claims a bounded lease/fence and retrieves current help-article revisions.
-4. Deterministic or explicitly enabled provider generation produces a structured reply.
-5. Validate shape, evidence membership and exact source quotes before saving an approvable draft.
-6. Persist progress events and expose a final authoritative snapshot to the UI.
+Open a request and read what the customer has already tried. **Prepare reply** starts a persisted job and immediately shows a waiting/preparing state. The page updates automatically. A successful result contains a customer-specific draft, a short summary and source citations. Open a citation to inspect the article text and revision.
 
-Runs move through queued/retrieving/generating/ready, with failed/cancelled terminal paths. Missing evidence yields a clarification-oriented result without a provider call or unsupported promise. The OpenRouter adapter returns strict structured JSON; the UI shows preparation progress then a complete validated reply. It does not claim token-by-token streaming.
+If current articles do not answer the question, the draft asks for clarification. It must not invent a policy. A failed provider call or invalid citation leaves a visible failure; **Prepare another reply** creates a new attempt. Cancellation prevents an in-flight result from becoming the saved draft.
 
 ## Edit and approve
 
-A user edits a saved draft with an expected version. The UI identifies these edits as user edits rather than claiming model validation. Approval checks the exact saved version, records response/history and optional internal escalation, resolves the ticket and stores an idempotency receipt in one transaction. Same key/same intent replays; changed intent or a stale version conflicts. Reload and review the current version before trying a changed approval.
+Edit the response and **Save edits**. Unsaved edits disable approval. **Review & approve** opens the exact saved text and proposed internal outcome. Confirmation records the response and resolves the request. Choosing **Reply + escalation** also records an internal escalation task. No email, external ticket update or customer-system action occurs.
 
-## Recovery and cancellation
+Approval is versioned and idempotent. A repeated confirmation replays its existing result; a changed intent or stale draft version conflicts. Reload the saved draft before proceeding after a conflict.
 
-Jobs use 90-second leases, fencing and at most three deliveries. A committed job survives API/worker failure. Provider work happens outside a transaction; completion is conditional on the current claim and uncancelled run. Cancellation invalidates a claimed worker; it does not undo a completed approval. A stale worker cannot overwrite the current result.
+## Revisit
 
-Per-run events are persisted before exposure. The SSE client deduplicates events, resumes with its cursor and retrieves the final snapshot. Connections are bounded; disconnect does not cancel a durable job. Network retries and worker recovery can repeat external work, so stored-effect idempotency is not exactly-once model billing.
-
-## Inbox and history
-
-Cursor pagination uses descending numeric sequence ordering, scoped authenticated cursors and a first-page insertion ceiling. It must remain correct across digit boundaries such as 9/10 and 99/100. Filter changes reset the client query; stale appended pages must not cross filters or sessions. Current status membership remains live, so refresh after resolving a ticket.
-
-See [testing](testing.md) for evidence and [limits](limits.md) for admission/provider caps.
+Resolved requests remain accessible through navigation. Ticket history retains preparations, approved responses and escalation entries. Open a saved preparation to review an earlier draft and its sources. Inbox and history load additional pages using cursors and explicit limits; refresh starts a new traversal.

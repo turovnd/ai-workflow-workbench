@@ -1,6 +1,5 @@
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
-import reactHooks from 'eslint-plugin-react-hooks';
 export default tseslint.config(
   {
     ignores: [
@@ -8,7 +7,12 @@ export default tseslint.config(
       'dist-server/**',
       'node_modules/**',
       'docs/**',
-      'apps/web/src/components/ui/**',
+      'frontend/src/components/ui/**',
+      'frontend/src/api/generated.ts',
+      '**/node_modules/**',
+      '**/test-results/**',
+      '**/playwright-report/**',
+      '.vercel/**',
       'playwright-report/**',
       'test-results/**',
     ],
@@ -16,8 +20,8 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    files: ['apps/web/src/**/*.{ts,tsx}'],
-    plugins: { 'react-hooks': reactHooks },
-    rules: { ...reactHooks.configs.recommended.rules },
+    languageOptions: {
+      parserOptions: { tsconfigRootDir: import.meta.dirname },
+    },
   },
 );

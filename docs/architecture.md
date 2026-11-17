@@ -2,39 +2,35 @@
 
 ```mermaid
 flowchart LR
-  UI[React UI on Vercel] -->|HTTPS bearer requests / SSE| API[Fastify API]
-  API --> DB[(Private PostgreSQL)]
-  Worker[Node worker] -->|lease and fenced completion| DB
-  Worker -->|optional bounded generation| Provider[OpenRouter]
+  Browser[React frontend] -->|same-origin /api| API[Fastify API]
+  API --> DB[(Neon PostgreSQL)]
+  API -->|notification| Queue[Vercel Queues]
+  Queue --> Worker[Private worker]
+  Worker --> DB
+  Worker --> OpenRouter
+  Schedule[Recovery schedule] --> Queue
 ```
 
-The API owns HTTP validation/authentication and composes application operations. The worker owns durable execution. PostgreSQL owns jobs, sessions, current knowledge revisions, runs, drafts, events, approvals and receipts. The UI is an independent static build; the backend is not a Vercel Function.
+`frontend` owns pages, reusable domain components, hooks and a generated API client. Pages live in named folders with `index.tsx`; page-specific components stay beside the page. UI and domain barrels expose their public components. TanStack Query owns server state, the URL owns shareable filters, and React Router owns navigation.
 
-## Source boundaries
+`backend/modules/api` owns HTTP validation, authentication and responses. `backend/modules/worker` owns execution. Neither imports the other. `backend/common` contains the shared contracts, repositories, knowledge adapter and queue transport. `backend/migrations` is applied explicitly before starting a changed release; request handlers do not create tables.
 
-| Path                           | Responsibility                                                |
-| ------------------------------ | ------------------------------------------------------------- |
-| `apps/web/src/pages`           | Page composition and user journeys.                           |
-| `apps/web/src/components`      | Reusable UI and generated primitives.                         |
-| `apps/web/src/hooks`           | Query, session, streaming and interaction state.              |
-| `apps/web/src/lib`             | API client, event parsing and UI utilities.                   |
-| `apps/api/src/routes`          | HTTP endpoint composition.                                    |
-| `apps/api/src/plugins`         | Shared HTTP concerns and documentation wiring.                |
-| `apps/api/src/schemas`         | Route request/response schemas.                               |
-| `apps/worker/src`              | Worker startup and execution loop.                            |
-| `packages/contracts/src`       | Validated shared transport/domain shapes.                     |
-| `packages/data/src`            | PostgreSQL repositories and transactions.                     |
-| `packages/data/migrations`     | Database migration assets.                                    |
-| `packages/knowledge/src`       | Synthetic corpus, retrieval/evidence and generation behavior. |
-| `packages/config/src`          | Server environment parsing shared by API/worker/migrator.     |
-| `tests/apps`, `tests/packages` | Tests mirroring production ownership.                         |
+## Transactions and failure boundaries
 
-Packages have explicit exports. Web depends on contracts, not repositories or server configuration. API and worker share packages without importing another app. Configuration and database access stay outside browser bundles. The current structure passed local static, build, database and browser checks; hosted release status is recorded in [status](delivery-status.md).
+A preparation transaction creates a run, job and history item. Queue publishing happens after commit. If publishing fails, the durable job still exists and the scheduled recovery consumer republishes it. Queue delivery is at least once; PostgreSQL claims one lease at a time with an increasing fence. Generation runs outside a transaction. Completion checks the current fence and lease before saving a draft.
 
-## Consistency boundaries
+A transient provider failure is retried, with at most three claimed attempts. Invalid output is terminal and visible to the reviewer. A crashed worker leaves an expiring lease. Cancellation increments the fence, so a late response cannot become the saved draft. These rules prevent conflicting database effects, not duplicate external billing.
 
-Run and job creation commit together. Workers claim leases with increasing fences, perform external work outside the transaction and conditionally commit only their current claim. Persisted per-run events support replay; a final snapshot resolves terminal UI state. Approval serializes the exact saved draft version and records reply/history/escalation plus idempotency outcome atomically.
+Approval locks the run and saved draft, checks the submitted version, and commits the approved text, history, optional escalation and idempotency receipt together. Editing a newer version while another reviewer approves an older one produces a conflict rather than silently changing the approved response.
 
-Ticket/history pagination uses a descending numeric keyset and an insertion ceiling established on the first page. Cursors are authenticated and scoped to workspace and filters/ticket. Status membership remains live; explicit refresh is necessary after relevant mutations. This differs from Feedback Desk's frozen membership model.
+## Retrieval and model boundary
 
-See [active hosting decision](decisions/0002-hybrid-hosting.md), [auth](auth-tenancy.md) and [workflows](workflows.md).
+The seeded ticket topic selects a small search query; PostgreSQL full-text search selects current articles. The adapter sends the actual customer message and those articles to OpenRouter. It requires structured output and checks that every citation references a current article with an exact quote. Missing knowledge yields an uncited clarification draft. The model does not execute actions, contact customers or write directly to the database.
+
+This is intentionally simpler than embeddings and a general document ingestion pipeline. It makes the review and failure semantics visible without introducing a second storage system. The limitation is that arbitrary imported tickets would require a separate retrieval and evaluation design.
+
+## Pagination and state
+
+Ticket and history endpoints use descending numeric keysets. The first page records an insertion ceiling; later inserts cannot shift the current traversal. Signed cursors bind the workspace and filter (or ticket), and every query applies that workspace. Status membership remains live, so an approval invalidates the relevant list. It is not a frozen snapshot of status changes.
+
+The browser reconnects persisted events and polls an active run as a recovery path. Signing out cancels queries and clears cached data. Responses from an older token cannot populate a new workspace.

@@ -1,45 +1,40 @@
 # Local setup
 
-## Complete Docker stack
-
-Use Docker Compose v2. Keep an existing `.env`; otherwise copy `.env.example` and replace `POSTGRES_PASSWORD` with a unique URL-safe value.
+## Docker
 
 ```sh
 cp -n .env.example .env
-docker compose --profile local up --build -d --wait
+# Set POSTGRES_PASSWORD; preserve any existing configuration.
+docker compose --profile local up --build --wait -d
 ```
 
-The local UI is `http://127.0.0.1:4173`; its nginx proxy sends `/api` requests to this stack's API. Fastify binds host loopback `4010`. PostgreSQL has no public host port. The one-shot migration service must succeed before API/worker startup. Stop this project with `docker compose --profile local down`; omit `-v` to retain data.
+UI: `http://127.0.0.1:4173`. API and Swagger: `http://127.0.0.1:4010/docs/`. PostgreSQL is private to the Compose network. A migration service must finish before the API and worker start. Use `API_PORT` and `WEB_PORT` to avoid occupied ports. `docker compose --profile local down` retains the database volume; do not add `-v` unless intentionally discarding local data.
 
-## Workspace development
+The frontend Dockerfile uses one nginx configuration to serve static files and proxy `/api`. Vercel serves the frontend directly and does not use nginx. Images use explicit version tags to make runtime upgrades deliberate; `alpine` is the base image family, not an application version.
 
-Use the pinned Node 24/npm toolchain in `.nvmrc` and `package.json`; install from the repository root.
+## Real AI
+
+Set the following in the ignored `.env` file:
+
+```dotenv
+GENERATION_MODE=openrouter
+ALLOW_LIVE_PROVIDER=true
+OPENROUTER_API_KEY=your-server-side-key
+OPENROUTER_MODEL=openai/gpt-4.1-mini
+LIVE_CALL_BUDGET=-1
+```
+
+Restart API and worker after configuration changes. Only the worker receives the OpenRouter key. `-1` removes the application's lifetime call cap; a nonnegative value sets an optional durable admission ceiling. A claimed model attempt consumes that allowance even if it fails. Provider account limits still apply. The worker permits at most three attempts per preparation and requests at most 1,200 output tokens per attempt.
+
+Sample mode is for offline development and deterministic tests. Its UI says **Sample response**. OpenRouter failures remain failures; they never substitute sample text.
+
+## Native development
 
 ```sh
 npm ci
 npm run dev
 ```
 
-The web dev server is on `http://127.0.0.1:5173` and proxies `/api` to loopback `4010`. For native backend development, export `DATABASE_URL` for an isolated PostgreSQL database, run `npm run db:migrate`, then start `npm run dev:api` and `npm run dev:worker` in separate terminals. Native Node commands consume process environment; they do not implicitly load `.env`.
+Vite serves port 5173 and proxies `/api` to port 4010. For a native API/worker, export `DATABASE_URL` pointing to an isolated PostgreSQL database, run `npm run db:migrate`, then run `npm run dev:api` and `npm run dev:worker` in separate terminals. Native commands consume process environment, not `.env` implicitly.
 
-`npm run build:web` produces `apps/web/dist`; API/worker builds produce their own `dist` directories. `npm run build` is the aggregate build. Final refactor command verification is recorded in [testing](testing.md).
-
-## Environment
-
-| Setting               | Meaning                                                                       |
-| --------------------- | ----------------------------------------------------------------------------- |
-| `POSTGRES_PASSWORD`   | Compose-only private database credential; replace the example.                |
-| `DATABASE_URL`        | Native API/worker/migrator PostgreSQL connection.                             |
-| `APP_IMAGE`           | Versioned backend image used by the deployment.                               |
-| `CORS_ORIGINS`        | Exact allowed browser origins, comma separated.                               |
-| `TRUST_PROXY`         | Verified proxy peers only; default trusts none.                               |
-| `VITE_API_URL`        | Public frontend API origin; production uses `https://workflow-api.b2p.space`. |
-| `GENERATION_MODE`     | `deterministic` by default; `openrouter` is explicit opt-in.                  |
-| `ALLOW_LIVE_PROVIDER` | Must also be true before live generation.                                     |
-| `OPENROUTER_API_KEY`  | Server-only secret, never a `VITE_*` value.                                   |
-| `OPENROUTER_MODEL`    | Configured model; baseline defaults to `openai/gpt-4.1-mini`.                 |
-| `LIVE_CALL_BUDGET`    | Durable lifetime admission ceiling; default 2, permitted 0–10.                |
-
-A live call needs mode, enablement, key and available durable budget. Failed/abandoned attempts consume budget. Increasing the setting raises the lifetime ceiling; restarting containers does not reset usage. Routine tests remain deterministic.
-
-See [operations](operations.md) for remote deployment and [limits](limits.md) for provider bounds.
+`CORS_ORIGINS` configures exact allowed origins for separate-origin development. The hosted frontend uses relative `/api` URLs. Do not put credentials in `VITE_*` variables; they are public.

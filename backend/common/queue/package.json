@@ -1,0 +1,16 @@
+{
+  "name": "@support-desk/queue",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@vercel/queue": "0.11.0",
+    "zod": "4.6.7"
+  },
+  "exports": {
+    ".": "./index.ts"
+  }
+}

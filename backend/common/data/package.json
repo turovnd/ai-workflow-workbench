@@ -1,0 +1,19 @@
+{
+  "name": "@support-desk/data",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@support-desk/contracts": "0.1.0",
+    "@support-desk/knowledge": "0.1.0",
+    "node-pg-migrate": "9.0.0",
+    "pg": "8.23.1"
+  },
+  "exports": {
+    ".": "./index.ts",
+    "./migrations": "./migrations.ts"
+  }
+}

@@ -1,4 +1,4 @@
-name: Verify workbench
+name: Verify Support Desk
 on:
   push:
   pull_request:
@@ -28,7 +28,7 @@ jobs:
       - run: npm ci
       - run: npm run lint && npm run format:check && npm run typecheck
       - run: npm test && npm run test:db
-      - run: npm run build
+      - run: npm run api:check && npm run build
       - run: npx playwright install --with-deps chromium
       - run: docker compose --profile local up --build --wait -d
         env:
@@ -44,4 +44,4 @@ jobs:
         if: always()
         with:
           name: browser-traces
-          path: test-results
+          path: frontend/test-results
