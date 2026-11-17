@@ -45,7 +45,6 @@
     },
     "worker": {
       "root": "backend/modules/worker",
-      "framework": null,
       "functions": {
         "api/replies.ts": {
           "maxDuration": 75,
@@ -65,7 +64,9 @@
             }
           ]
         }
-      }
+      },
+      "buildCommand": "npm run build",
+      "outputDirectory": "dist"
     }
   },
   "rewrites": [
