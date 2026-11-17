@@ -28,7 +28,13 @@ const app = await createApp(
   config.GENERATION_MODE,
   process.env.VERCEL ? publishJob : undefined,
 );
-await app.listen({ host: '0.0.0.0', port: config.PORT });
+// The Vercel adapter starts accepting requests after the module finishes loading.
+void app
+  .listen({ host: '0.0.0.0', port: config.PORT })
+  .catch((error: unknown) => {
+    app.log.error(error, 'API failed to start.');
+    process.exitCode = 1;
+  });
 
 const shutdown = async () => {
   await app.close();
