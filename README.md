@@ -4,7 +4,7 @@ A support agent needs to answer a customer quickly without inventing a policy or
 
 Support Desk turns a customer request into a **reviewed reply**: prepare a draft with OpenRouter, inspect the cited help articles, edit the wording and approve the exact saved version. If the knowledge base cannot answer the question, the draft asks for clarification. Approval records a response internally; it does not send an email.
 
-[Try the demo](https://turovnd-support-desk.vercel.app) · [API documentation](https://turovnd-support-desk.vercel.app/docs/) · [Project docs](docs/README.md)
+[Try the demo](https://turovnd-support-desk.vercel.app) · [API documentation](https://turovnd-support-desk.vercel.app/docs) · [Project docs](docs/README.md)
 
 ## Try a complete workflow
 

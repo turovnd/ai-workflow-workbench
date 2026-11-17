@@ -1,6 +1,6 @@
 # Vercel deployment
 
-The project deploys three services from one repository: `frontend` (Vite), `backend` (Fastify) and `worker` (queue consumers). Only the frontend and API have public rewrites. Requests use `/api` on the frontend origin; Swagger is at `/docs/` and the schema at `/openapi.json`.
+The project deploys three services from one repository: `frontend` (Vite), `backend` (Fastify) and `worker` (queue consumers). Only the frontend and API have public rewrites. Requests use `/api` on the frontend origin; Swagger is at `/docs` and the schema at `/openapi.json`.
 
 The worker uses the [Build Output API](https://vercel.com/docs/build-output-api/primitives) to package two private functions, with their subscriptions and limits read from `vercel.json`. Its Docker entrypoint is a polling loop and must never be deployed as a static build. CI loads both function bundles outside the repository to catch missing runtime dependencies.
 
