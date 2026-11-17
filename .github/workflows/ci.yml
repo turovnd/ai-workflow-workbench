@@ -30,6 +30,7 @@ jobs:
       - run: npm run lint && npm run format:check && npm run typecheck
       - run: npm test && npm run test:db
       - run: npm run api:check && npm run build
+      - run: node --test backend/tests/tools/build-vercel-worker.test.mjs
       - run: npx playwright install --with-deps chromium
       - run: docker compose --profile local up --build --wait -d
         env:

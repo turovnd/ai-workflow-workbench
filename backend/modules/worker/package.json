@@ -7,6 +7,7 @@
     "typecheck": "tsc --noEmit",
     "dev": "tsx watch main.ts",
     "build": "node ../../tools/build.mjs worker",
+    "build:vercel": "node ../../tools/build-vercel-worker.mjs",
     "start": "node dist/main.mjs"
   },
   "dependencies": {
