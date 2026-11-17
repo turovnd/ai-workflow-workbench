@@ -47,6 +47,9 @@
   ],
   "overrides": {
     "glob": "14.0.6",
-    "minimatch": "11.0.9"
+    "minimatch": "11.0.9",
+    "@fastify/static": {
+      "content-disposition": "2.0.1"
+    }
   }
 }

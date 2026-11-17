@@ -8,7 +8,7 @@ Create a separate Neon PostgreSQL project for Support Desk. Use its pooled conne
 
 Runtime settings:
 
-| Setting                      | Service         | Purpose                      |
+| Setting                      | Consumer        | Purpose                      |
 | ---------------------------- | --------------- | ---------------------------- |
 | `DATABASE_URL`               | backend, worker | Pooled database connection   |
 | `GENERATION_MODE=openrouter` | backend, worker | Live AI mode                 |
@@ -17,7 +17,7 @@ Runtime settings:
 | `OPENROUTER_MODEL`           | worker          | Model identifier             |
 | `LIVE_CALL_BUDGET=-1`        | worker          | No lifetime application cap  |
 
-Secrets belong in Vercel environment settings, scoped to the relevant services and deployment environment. The frontend needs no API credential or absolute API URL.
+Secrets belong in Vercel project environment settings, scoped to Production or Preview. Services share the project environment; this is not a per-service secret boundary. Only the worker code consumes the model key, and Vite never exposes it because it has no public prefix. Local Docker injects the key only into the worker. The frontend needs no API credential or absolute API URL.
 
 ## Release order
 
@@ -30,3 +30,5 @@ Secrets belong in Vercel environment settings, scoped to the relevant services a
 The `support-replies` queue wakes the private worker. The `support-maintenance` schedule runs every 30 minutes to recover committed jobs that lost their notification and expired leases. This recovery interval allows an idle database to suspend; normal notifications start work immediately. These platform features are in beta; job state and fencing live in PostgreSQL so the same processor can run in Docker if delivery needs to move.
 
 A deployment rollback changes code, not database schema or approved responses. Use additive migrations, take a backup before a destructive change, and restore into a separate database first.
+
+The `content-disposition` override keeps Swagger static assets compatible with the Vercel Node loader. The upstream ESM-only version fails when loaded by CommonJS in this runtime ([upstream issue](https://github.com/fastify/fastify-static/issues/612)). CI checks the Swagger dependency chain with `require(ESM)` disabled.
